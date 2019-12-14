@@ -19,8 +19,8 @@ int main() {
 	}
 
 	printf("free+dalloc\n"\
-          "\t\tno of free blocks\n"\
-          "\t\t\t\tno of blocks in arena");
+          "\tno of free blocks\n"\
+          "\t\tno of blocks in arena");
 	for(int j = 0; j < ROUNDS; j++) {
 		int i = 0;
 		for(; i < LOOPS; i++) {
