@@ -105,39 +105,49 @@ struct head *flist;
 
 /* Detach a block from the free list */
 void detach(struct head *block) {
-  if(NULL != block->next) {
+  // In the middle of the list
+  if(NULL != block->prev) {
+    if(NULL != block->next) {
+      block->prev->next = block->next;
+      block->next->prev = block->prev;
+    }
+  }
+
+  // Last in list
+  if(NULL == block->next) {
+    block->prev->next = NULL;
+    block->prev = NULL;
+  }
+
+  // First in list
+  if(NULL == block->prev) {
+    flist = block->next;
+    flist->prev = NULL;
+    block->next = NULL;
+  }
+
+  /*if(NULL != block->next) {
     block->next->prev = block->prev;
   }
 
   if(NULL != block->prev) {
     block->prev->next = block->next;
   } else {
-    flist = block->next;//block->next->prev = NULL;
-  }
+    ;//flist = block->next;//block->next->prev = NULL;
+  }*/
 
-  /*struct head *bfr = before(block);
+  struct head *bfr = before(block);
   struct head *aft = after(block);
   block->free = FALSE;
   aft->bfree = block->free;
 //  block->prev = NULL;
+  //block->next = NULL;
 
-  if(block != arena) {
+  /*if(block != arena) {
     block->bfree = bfr->free;
   } else {
     block->bfree = FALSE;
   }*/
-}
-
-void insert(struct head *block) {
-  block->next = NULL;//flist;//after(block);
-  block->prev = flist;//before(block);
-
-  if(NULL != flist) {
-    flist->prev = block;//block->next->prev = block;
-  }
-
-  flist = block;
-  //flist->free = TRUE;
 }
 
 /****************************************************************
@@ -150,7 +160,6 @@ int adjust(int size) {
   for(adjusted_size = MIN(0); adjusted_size < size; adjusted_size += ALIGN) {
     ;
   }
-
 
   return adjusted_size;
 }
@@ -196,24 +205,47 @@ int *dalloc(size_t request) {
   else {
     blocks_taken++;
 		//printf("dalloc - blocks_taken %d\n", blocks_taken);
+    printf("alloc mem %p\n", taken);
     return HIDE(taken);
   }
 }
 
+void insert(struct head *block) {
+  block->next = flist;//NULL;//flist;//after(block);
+  block->prev = NULL;//flist;//before(block);
+  
+  /*struct head *bfr = before(block);
+  struct head *aft = after(block);
+  aft->bfree = block->free;*/
+
+  /*(NULL != flist) {
+    flist->prev = block;
+    //block->next->prev = block;
+  }*/
+
+  flist = block;
+}
+
 void dfree(void *memory) {
-  struct head *block = MAGIC(memory);
 
   if(NULL != memory) {
+    struct head *block = MAGIC(memory);
     struct head *aft = after(block);
     struct head *bfr = before(block);
+
     block->free = TRUE;
-    if(block != arena) {
-      block->bfree = bfr->free;
-    }
     aft->bfree = block->free;
-    /*block->prev = aft->prev;
-    aft->prev = block;
-    if(NULL != block->prev) {
+
+    /*if(block != arena) {
+      block->bfree = bfr->free;
+    }*/
+
+    /*if(NULL != block->next) {
+      block->next->prev = block;
+    }*/
+    //block->prev = aft->prev;
+    //aft->prev = block;
+    /*if(NULL != block->prev) {
       block->prev->next = block;
     }*/
 
@@ -221,6 +253,7 @@ void dfree(void *memory) {
     insert(block);
     blocks_taken--;
 		//printf("dfree  - blocks_taken %d\n", blocks_taken);
+    printf("free mem %p\n", memory);
     //block->prev = NULL;
     //flist->free = TRUE;
   }
@@ -228,13 +261,14 @@ void dfree(void *memory) {
   return;
 }
 
-struct freelist* sanity(int print_ok, int print_error) {
+struct freelist* sanity(int print_ok, int print_error, int print_result_ok, int print_result_error) {
   struct freelist *freelist_info = (struct freelist*)malloc(sizeof(struct freelist));
   
   freelist_info->sanity_freelist  = TRUE;
   freelist_info->sanity_arena     = TRUE;
-  freelist_info->no_of_blocks_in_freelist = 0;
-  freelist_info->no_of_blocks_in_arena    = 0;
+  freelist_info->no_of_blocks_in_freelist         = 0;
+  freelist_info->no_of_blocks_in_arena            = 0;
+  freelist_info->total_size_of_blocks_in_freelist  = 0;
   struct head *next_block;
   int i = 0;
 
@@ -243,7 +277,9 @@ struct freelist* sanity(int print_ok, int print_error) {
     printf("Checking freelist - flist = %p\n", flist);
 
   struct head *block = flist;
-  while(1) {
+  intptr_t start = (intptr_t)block;
+  //while(1) {
+  for(;i<blocks_taken && block != NULL;){
     //struct head *block = flist;
 
     /* check that the block is free (status is TRUE) */
@@ -255,7 +291,7 @@ struct freelist* sanity(int print_ok, int print_error) {
     }
     /* check that next block's previous pointer is pointing to this one */
     if(NULL != block->next) {
-      next_block = block->next;
+      //next_block = block->next;
       if(block->next->prev != block) {
         if(print_error) printf("  Bad previous pointer %d - block %p block->next->prev %p\n",\
                i, block, block->next->prev);
@@ -272,12 +308,14 @@ struct freelist* sanity(int print_ok, int print_error) {
     } else {
       if(print_ok) printf("  OK block size - block %d\n", i);
     }
+    freelist_info->total_size_of_blocks_in_freelist += block->size;
 
     i++;
     freelist_info->no_of_blocks_in_freelist = i;
     
-    block = next_block;
-    if((NULL == block) || (block == next_block) || (block == flist) || (0 == block->size)) {
+    block = block->next;
+    //printf("start %ld\t block %p\t flist %p\t size %d\t freelist_info->no_of_blocks_in_freelist %d\n", start, block, flist, block->size, freelist_info->no_of_blocks_in_freelist);
+    if((NULL == block) || /*(block == next_block) ||*/ (block == flist) || (0 == block->size) || (start == (intptr_t)block)) {
       break;
     }
   }
@@ -312,10 +350,10 @@ struct freelist* sanity(int print_ok, int print_error) {
   }
 
 	if(TRUE == freelist_info->sanity_arena && TRUE == freelist_info->sanity_freelist) {
-	  if(print_ok) printf("Sanity checked - OK\n");
+	  if(print_result_ok) printf("Sanity checked - OK\n");
   }
 	else{
-	  if(print_error) printf("Sanity checked - ERROR\n");
+	  if(print_result_error) printf("Sanity checked - ERROR\n");
   }
 
   return freelist_info;

@@ -5,9 +5,9 @@
 #include "rand.h"
 #include "dlmall.h"
 
-#define ROUNDS 10
-#define LOOPS 30	
-#define MAX_MEMORY_SLOTS 100	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
+#define ROUNDS 1
+#define LOOPS 10
+#define MAX_MEMORY_SLOTS 1000	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
 
 int main() {
   struct freelist *freelist_info;
@@ -20,7 +20,8 @@ int main() {
 
 	printf("free+dalloc\n"\
           "\tno of free blocks\n"\
-          "\t\tno of blocks in arena");
+          "\t\tno of blocks in arena\n"\
+          "\t\t\tmean value of blocks in free list\n");
 	for(int j = 0; j < ROUNDS; j++) {
 		int i = 0;
 		for(; i < LOOPS; i++) {
@@ -30,24 +31,28 @@ int main() {
 				dfree(memory_slots[memory_slot]);
 				memory_slots[memory_slot] = 0;
 			} else {
-				void* mem = dalloc((size_t)request_size());
+        int size = request_size();
+				void* mem = dalloc((size_t)size);
 				if(NULL == mem) {
 					fprintf(stderr, "Out of memory after %d requests\n", i*j+i);
-					return 1;
+					//return 1;
+          continue;
 				} else {
 					memory_slots[memory_slot] = mem;
+          //printf("alloc size %d\n", size);
 				}
 			}
-      freelist_info = sanity(0,0);
 		}
-		printf("%d\t %d\t %d\n", i*j+i,\
+    freelist_info = sanity(0,1,0,0);
+		printf("%d\t %d\t %d\t %d\n", i*j+i,\
                              freelist_info->no_of_blocks_in_freelist,
-                             freelist_info->no_of_blocks_in_arena);
+                             freelist_info->no_of_blocks_in_arena,
+                             freelist_info->total_size_of_blocks_in_freelist / freelist_info->no_of_blocks_in_freelist);
 		//printf("%d\t %d\n", i*j+i, blocks_taken);
 	}
 
-	printf("end\n");
+	printf("== DONE ==\n");
 
-	sanity(1,1);
+	sanity(0,1,1,1);
 	return 0;
 }
