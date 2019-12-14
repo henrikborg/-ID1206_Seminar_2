@@ -17,6 +17,10 @@ case $1 in
 			echo "ERROR"
 		fi;
 		;;
+	clean)
+		rm *.o
+		rm bench test
+		;;
 	*)
 		if gcc -g -o bench $include_files bench.c -lm; then
 			echo "SUCCESS"
