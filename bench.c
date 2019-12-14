@@ -10,13 +10,17 @@
 #define MAX_MEMORY_SLOTS 100	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
 
 int main() {
-	printf("free+dalloc\tno of blocks taken\n");
+  struct freelist *freelist_info;
+  
 	void* memory_slots[MAX_MEMORY_SLOTS];
 	/* clear memory_slots */
 	for(int i = 0; i < MAX_MEMORY_SLOTS; i++) {
 		memory_slots[i] = 0;
 	}
 
+	printf("free+dalloc\n"\
+          "\t\tno of free blocks\n"\
+          "\t\t\t\tno of blocks in arena");
 	for(int j = 0; j < ROUNDS; j++) {
 		int i = 0;
 		for(; i < LOOPS; i++) {
@@ -34,13 +38,16 @@ int main() {
 					memory_slots[memory_slot] = mem;
 				}
 			}
-//sanity();
+      freelist_info = sanity(0,0);
 		}
-		printf("%d\t %d\n", i*j+i, blocks_taken);
+		printf("%d\t %d\t %d\n", i*j+i,\
+                             freelist_info->no_of_blocks_in_freelist,
+                             freelist_info->no_of_blocks_in_arena);
+		//printf("%d\t %d\n", i*j+i, blocks_taken);
 	}
 
 	printf("end\n");
 
-	sanity();
+	sanity(1,1);
 	return 0;
 }

@@ -228,16 +228,19 @@ void dfree(void *memory) {
   return;
 }
 
-struct freelist* sanity(void) {
+struct freelist* sanity(int print_ok, int print_error) {
   struct freelist *freelist_info = (struct freelist*)malloc(sizeof(struct freelist));
   
-  freelist_info->sanity_freelist = TRUE;
-  freelist_info->sanity_arena = TRUE;
+  freelist_info->sanity_freelist  = TRUE;
+  freelist_info->sanity_arena     = TRUE;
+  freelist_info->no_of_blocks_in_freelist = 0;
+  freelist_info->no_of_blocks_in_arena    = 0;
   struct head *next_block;
   int i = 0;
 
   /*** check the freelist ***/
-  printf("Checking freelist - flist = %p\n", flist);
+  if(print_error || print_ok)
+    printf("Checking freelist - flist = %p\n", flist);
 
   struct head *block = flist;
   while(1) {
@@ -245,40 +248,43 @@ struct freelist* sanity(void) {
 
     /* check that the block is free (status is TRUE) */
     if(TRUE != block->free) {
-      printf("  Block is not marked as free, is %d, %d, %p\n", block->free, i, block);
+      if(print_error) printf("  Block is not marked as free, is %d, %d, %p\n", block->free, i, block);
       freelist_info->sanity_freelist = FALSE;
     } else {
-      printf("  OK block marked as free %d %p\n", i, block);
+      if(print_ok) printf("  OK block marked as free %d %p\n", i, block);
     }
     /* check that next block's previous pointer is pointing to this one */
     if(NULL != block->next) {
       next_block = block->next;
       if(block->next->prev != block) {
-        printf("  Bad previous pointer %d - block %p block->next->prev %p\n",\
+        if(print_error) printf("  Bad previous pointer %d - block %p block->next->prev %p\n",\
                i, block, block->next->prev);
         freelist_info->sanity_freelist = FALSE;
       } else {
-        printf("  OK previous pointer %d - block %p block->next->prev %p\n",\
+        if(print_ok) printf("  OK previous pointer %d - block %p block->next->prev %p\n",\
                 i, block, block->next->prev);
       }
     }
     /* check the size of this block */
     if(adjust(block->size) != block->size) {
-      printf("  Bad block size %d\n", i);
+      if(print_error) printf("  Bad block size %d\n", i);
       freelist_info->sanity_freelist = FALSE;
     } else {
-      printf("  OK block size - block %d\n", i);
+      if(print_ok) printf("  OK block size - block %d\n", i);
     }
 
+    i++;
+    freelist_info->no_of_blocks_in_freelist = i;
+    
     block = next_block;
     if((NULL == block) || (block == next_block) || (block == flist) || (0 == block->size)) {
       break;
     }
-    i++;
   }
 
   /*** check the ARENA-list ***/
-  printf("Checking ARENA-list\n");
+  if(print_error || print_ok)
+    printf("Checking ARENA-list\n");
   i = 0;
   for(struct head *block = arena; NULL != block->next; block = after(block), i++) {
     next_block = after(block);
@@ -289,24 +295,28 @@ struct freelist* sanity(void) {
     }
     /* check that the next block know the size of this block */
     if(next_block->bsize != block->size) {
-      printf("  Bad bsize of block %d\n", i);
+      if(print_error) printf("  Bad bsize of block %d\n", i);
       freelist_info->sanity_arena = FALSE;
     }
     if(next_block->bfree != block->free) {
-      printf("  Bad bfree of block %d\n", i);
+      if(print_error) printf("  Bad bfree of block %d\n", i);
       freelist_info->sanity_arena = FALSE;
     }
     /* check the size of this block */
     if(adjust(block->size) != block->size) {
-      printf("  Bad block size {adjust(ALIGN)] %d\n", i);
+      if(print_error) printf("  Bad block size {adjust(ALIGN)] %d\n", i);
       freelist_info->sanity_arena = FALSE;
     }
+
+    freelist_info->no_of_blocks_in_arena = i;
   }
 
-	if(TRUE == freelist_info->sanity_arena && TRUE == freelist_info->sanity_freelist)
-	  printf("Sanity checked - OK\n");
-	else
-	  printf("Sanity checked - ERROR\n");
+	if(TRUE == freelist_info->sanity_arena && TRUE == freelist_info->sanity_freelist) {
+	  if(print_ok) printf("Sanity checked - OK\n");
+  }
+	else{
+	  if(print_error) printf("Sanity checked - ERROR\n");
+  }
 
   return freelist_info;
 }
