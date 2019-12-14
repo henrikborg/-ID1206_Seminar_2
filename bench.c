@@ -5,12 +5,12 @@
 #include "rand.h"
 #include "dlmall.h"
 
-#define ROUNDS 1
-#define LOOPS 3	
-#define MAX_MEMORY_SLOTS 100
+#define ROUNDS 10
+#define LOOPS 30	
+#define MAX_MEMORY_SLOTS 100	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
 
 int main() {
-	printf("free+dalloc\tlength of freelist\n");
+	printf("free+dalloc\tno of blocks taken\n");
 	void* memory_slots[MAX_MEMORY_SLOTS];
 	/* clear memory_slots */
 	for(int i = 0; i < MAX_MEMORY_SLOTS; i++) {
@@ -21,6 +21,7 @@ int main() {
 		int i = 0;
 		for(; i < LOOPS; i++) {
 			int memory_slot = request_memory_slot(MAX_MEMORY_SLOTS);
+			//printf("requested memory slot %d\n", memory_slot);
 			if(memory_slots[memory_slot]) {
 				dfree(memory_slots[memory_slot]);
 				memory_slots[memory_slot] = 0;
@@ -35,7 +36,7 @@ int main() {
 			}
 //sanity();
 		}
-		printf("%d\t %d\n", i*j+i, length_of_freelist);
+		printf("%d\t %d\n", i*j+i, blocks_taken);
 	}
 
 	printf("end\n");

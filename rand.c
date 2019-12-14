@@ -22,5 +22,5 @@ int request_size() {
 }
 
 int request_memory_slot(int max) {
-	return request(0, max);
+	return request(1, max);
 }
