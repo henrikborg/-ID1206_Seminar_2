@@ -105,7 +105,14 @@ struct head *flist;
 
 /* Detach a block from the free list */
 void detach(struct head *block) {
-  // In the middle of the list
+  if(block->next == block) {
+    flist = NULL;
+  } else {
+    block->next->prev = block->prev;
+    block->prev->next = block->next;
+  }
+  
+  /*// In the middle of the list
   if(NULL != block->prev) {
     if(NULL != block->next) {
       block->prev->next = block->next;
@@ -124,7 +131,7 @@ void detach(struct head *block) {
     flist = block->next;
     flist->prev = NULL;
     block->next = NULL;
-  }
+  }*/
 
   /*if(NULL != block->next) {
     block->next->prev = block->prev;
