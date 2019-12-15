@@ -5,8 +5,8 @@
 #include "rand.h"
 #include "dlmall.h"
 
-#define ROUNDS 1
-#define LOOPS 10
+#define ROUNDS 10
+#define LOOPS 100
 #define MAX_MEMORY_SLOTS 1000	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
 
 int main() {
@@ -22,16 +22,19 @@ int main() {
           "\tno of free blocks\n"\
           "\t\tno of blocks in arena\n"\
           "\t\t\tmean value of blocks in free list\n");
+  printf("flist - bench - %p\n", flist);
 	for(int j = 0; j < ROUNDS; j++) {
 		int i = 0;
 		for(; i < LOOPS; i++) {
 			int memory_slot = request_memory_slot(MAX_MEMORY_SLOTS);
 			//printf("requested memory slot %d\n", memory_slot);
 			if(memory_slots[memory_slot]) {
+        printf("Bench dfree\n");
 				dfree(memory_slots[memory_slot]);
 				memory_slots[memory_slot] = 0;
 			} else {
         int size = request_size();
+        printf("Bench dalloc\n");
 				void* mem = dalloc((size_t)size);
 				if(NULL == mem) {
 					fprintf(stderr, "Out of memory after %d requests\n", i*j+i);
@@ -43,6 +46,7 @@ int main() {
 				}
 			}
 		}
+    printf("flist - bench - %p\n", flist);
     freelist_info = sanity(0,1,0,0);
 		printf("%d\t %d\t %d\t %d\n", i*j+i,\
                              freelist_info->no_of_blocks_in_freelist,
