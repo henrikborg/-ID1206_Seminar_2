@@ -1,0 +1,18 @@
+free+dalloc
+	no of free blocks
+		no of blocks in arena
+			mean value of blocks in free list
+100	 2	 67	 29176
+200	 5	 108	 10580
+300	 1	 136	 52152
+400	 1	 170	 50560
+500	 1	 200	 48384
+600	 4	 231	 11420
+700	 1	 252	 43760
+800	 5	 268	 8824
+900	 13	 278	 3381
+1000	 8	 295	 5439
+== DONE ==
+Checking freelist - flist = 0x7fb89a2f8f68
+Checking ARENA-list
+Sanity checked - OK

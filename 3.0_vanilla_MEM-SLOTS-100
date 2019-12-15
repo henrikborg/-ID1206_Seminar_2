@@ -2,19 +2,17 @@ free+dalloc
 	no of free blocks
 		no of blocks in arena
 			mean value of blocks in free list
-30	 1	 3	 32
-60	 1	 1	 16
-90	 1	 1	 24
-120	 1	 0	 32
-150	 1	 0	 32
-180	 1	 0	 24
-210	 1	 0	 16
-240	 1	 0	 16
-270	 1	 0	 8
-300	 1	 0	 8
-end
-Checking freelist - flist = 0x7f52f1a14a68
-  OK block marked as free 0 0x7f52f1a14a68
-  OK block size - block 0
+100	 12	 37	 5196
+200	 17	 48	 3730
+300	 15	 60	 4194
+400	 18	 61	 3502
+500	 17	 64	 3705
+600	 19	 68	 3314
+700	 22	 69	 2866
+800	 20	 69	 3149
+900	 18	 69	 3499
+1000	 19	 70	 3310
+== DONE ==
+Checking freelist - flist = 0x7faa8aefe0d8
 Checking ARENA-list
 Sanity checked - OK
