@@ -284,8 +284,10 @@ struct freelist* sanity(int print_ok, int print_error, int print_result_ok, int 
   if(print_error || print_ok)
     printf("Checking ARENA-list\n");
   i = 0;
-  for(struct head *block = arena; NULL != block->next; block = after(block), i++) {
+  block = arena;
+  for(; (intptr_t)NULL != block->size; block = after(block), i++) {
     next_block = after(block);
+    //printf("top of foor loop\n");
 
     /* if block is taken, check it knows the status and size of previous block */
     if(FALSE == block->free) {
@@ -293,7 +295,7 @@ struct freelist* sanity(int print_ok, int print_error, int print_result_ok, int 
     }
     /* check that the next block know the size of this block */
     if(next_block->bsize != block->size) {
-      if(print_error) printf("  Bad bsize of block %d\n", i);
+      if(print_error) printf("  Bad bsize of block %d  size %d  bsize %d\n", i, block->size, next_block->bsize);
       freelist_info->sanity_arena = FALSE;
     }
     if(next_block->bfree != block->free) {
@@ -307,7 +309,7 @@ struct freelist* sanity(int print_ok, int print_error, int print_result_ok, int 
     }
 
     freelist_info->no_of_blocks_in_arena = i;
-    printf("no_of_blocks_in_arena %d\n",freelist_info->no_of_blocks_in_arena);
+    //printf("no_of_blocks_in_arena %d\n",freelist_info->no_of_blocks_in_arena);
   }
 
 	if(TRUE == freelist_info->sanity_arena && TRUE == freelist_info->sanity_freelist) {
