@@ -35,14 +35,8 @@ struct head *before(struct head *block) {
 }
 
 struct head *split(struct head *block, int size) {
-  //printf("split enter flist %p\n", flist);
-  //printf("split enter block %p\n", block);
-  //printf("split enter block->size %d\n", block->size);
-  //printf("split enter size %d\n", size);
   int rsize = block->size - size - HEAD;  // the size of the next block
   block->size  = rsize;
-  //printf("split block %p\n", block);
-  //printf("split block->size %d\n", block->size);
 
   struct head *splt = after(block); //(struct head*)((char*)block + HEAD + rsize);
   splt->bsize = rsize;              // size of previous block
@@ -56,14 +50,7 @@ struct head *split(struct head *block, int size) {
 
   splt->next = NULL;    // not in free list
   splt->prev = NULL;    // not in free list
-  //splt->next = aft;
-  //aft->prev = splt;
-  //block->next = splt;
-  //splt->prev = block;
-
-  //printf("split exit splt %p\n", splt);
-  //printf("split exit splt->size %d\n", splt->size);
-  //printf("split exit flist %p\n", flist);
+  
   return splt;
 }
 
@@ -76,7 +63,6 @@ struct head *new() {
     return NULL;
   }
 
-  //printf("new enter flist %p\n", flist);
   // using mmap, but could have used sbrk
   struct head *new = mmap(NULL, ARENA,
                           PROT_READ | PROT_WRITE,
@@ -84,7 +70,7 @@ struct head *new() {
                           -1, 0);
 
   if(MAP_FAILED == new) {
-    printf("nmap failed: error %d\n", errno);
+    printf("mmap failed: error %d\n", errno);
     return NULL;
   }
 
@@ -104,11 +90,10 @@ struct head *new() {
   sentinel->free = FALSE;
   sentinel->size = 0;
   //sentinel->prev = new;
-  //sentinel->next = NULL;
+  sentinel->next = NULL;
 
   /* this is the only arena we have */
   arena = (struct head*)new;
-  //printf("new exit flist %p\n", flist);
 
   return new;
 }
@@ -118,8 +103,6 @@ struct head *flist;
 
 /* Detach a block from the free list */
 void detach(struct head *block) {
-  //printf("detach enter flist %p\n", flist);
-  //printf("detach enter block %p\n", block);
   // In the middle of the list
   if(NULL != block->prev) {
     if(NULL != block->next) {
@@ -139,34 +122,12 @@ void detach(struct head *block) {
     flist = block->next;
     flist->prev = NULL;
     block->next = NULL;
-    //printf("flist - detach - first in list - %p\n", flist);
-    //printf("flist->next - detach - first in list - %p\n", flist->next);
   }
-
-  /*if(NULL != block->next) {
-    block->next->prev = block->prev;
-  }
-
-  if(NULL != block->prev) {
-    block->prev->next = block->next;
-  } else {
-    ;//flist = block->next;//block->next->prev = NULL;
-  }*/
 
   struct head *bfr = before(block);
   struct head *aft = after(block);
   block->free = FALSE;
   aft->bfree = block->free;
-  //printf("flist - detach - %p\n", flist);
-//  block->prev = NULL;
-  //block->next = NULL;
-
-  /*if(block != arena) {
-    block->bfree = bfr->free;
-  } else {
-    block->bfree = FALSE;
-  }*/
-  //printf("detach exit flist %p\n", flist);
 }
 
 /****************************************************************
@@ -184,7 +145,6 @@ int adjust(int size) {
 }
 
 void insert(struct head *block) {
-  //printf("insert enter flist %p\n", flist);
   block->next = flist;//NULL;//flist;//after(block);
   block->prev = NULL;//flist;//before(block);
   
@@ -198,7 +158,6 @@ void insert(struct head *block) {
   }
 
   flist = block;          // let list point to first element in list
-  //printf("insert exit flist %p\n", flist);
 }
 
 /****************************************************************
@@ -208,7 +167,6 @@ If necessary split the found block
 struct head* find(int size) {
   if(NULL == arena) {
     flist = new();
-    //printf("find enter flist %p\n", flist);
   }
 
   for(struct head* block = flist; NULL != block; block = block->next) {
@@ -217,14 +175,10 @@ struct head* find(int size) {
     if(block->size >= LIMIT(size)) {
       struct head *splt;
       splt = split(block, size);
-      //insert(splt);
-			//detach(block);
-      //printf("find exit flist %p\n", flist);
 
       return splt;
     } else {
       detach(block);
-      //printf("find exit flist %p\n", flist);
 
       return block;
     }
@@ -237,7 +191,6 @@ int *dalloc(size_t request) {
   if(request < 0) {
     return NULL;
   }
-  //printf("dalloc enter flist %p\n", flist);
 
   int size = adjust(request);
   struct head *taken = (struct head*)find(size);
@@ -246,15 +199,11 @@ int *dalloc(size_t request) {
     return NULL;
   else {
     blocks_taken++;
-		//printf("dalloc - blocks_taken %d\n", blocks_taken);
-    //printf("dalloc mem %p\n", taken);
-    //printf("dalloc exit flist %p\n", flist);
     return HIDE(taken);
   }
 }
 
 void dfree(void *memory) {
-  //printf("dfree enter flist %p\n", flist);
   if(NULL != memory) {
     struct head *block = MAGIC(memory);
     struct head *aft = after(block);
@@ -263,30 +212,10 @@ void dfree(void *memory) {
     block->free = TRUE;
     aft->bfree = block->free;
 
-    /*if(block != arena) {
-      block->bfree = bfr->free;
-    }*/
-
-    /*if(NULL != block->next) {
-      block->next->prev = block;
-    }*/
-    //block->prev = aft->prev;
-    //aft->prev = block;
-    /*if(NULL != block->prev) {
-      block->prev->next = block;
-    }*/
-
     /* update freelist */
-    printf("flist    %p\n", flist);
     insert(block);
     blocks_taken--;
-		//printf("free mem %p\n", block);
-    //printf("flist    %p\n", flist);
-    //block->prev = NULL;
-    //block->free = TRUE;
-    //flist->free = TRUE;
   }
-  //printf("dfree exit flist %p\n", flist);
 
   return;
 }
@@ -298,7 +227,7 @@ struct freelist* sanity(int print_ok, int print_error, int print_result_ok, int 
   freelist_info->sanity_arena     = TRUE;
   freelist_info->no_of_blocks_in_freelist         = 0;
   freelist_info->no_of_blocks_in_arena            = 0;
-  freelist_info->total_size_of_blocks_in_freelist  = 0;
+  freelist_info->total_size_of_blocks_in_freelist = 0;
   struct head *next_block;
   int i = 0;
 
@@ -378,6 +307,7 @@ struct freelist* sanity(int print_ok, int print_error, int print_result_ok, int 
     }
 
     freelist_info->no_of_blocks_in_arena = i;
+    printf("no_of_blocks_in_arena %d\n",freelist_info->no_of_blocks_in_arena);
   }
 
 	if(TRUE == freelist_info->sanity_arena && TRUE == freelist_info->sanity_freelist) {
