@@ -171,6 +171,8 @@ If necessary split the found block
 struct head* find(int size) {
   if(NULL == arena) {
     flist = new();
+    flist->next = flist;
+    flist->prev = flist;
   }
 
   for(struct head* block = flist; NULL != block; block = block->next) {
@@ -214,15 +216,18 @@ void insert(struct head *block) {
   block->next = flist;//NULL;//flist;//after(block);
   block->prev = NULL;//flist;//before(block);
   
-  /*struct head *bfr = before(block);
-  struct head *aft = after(block);
-  aft->bfree = block->free;*/
-
-  /*(NULL != flist) {
+  if(flist->next == flist) {
+    flist->next = block;
     flist->prev = block;
-    //block->next->prev = block;
-  }*/
-
+    block->next = flist;
+    block->prev = flist;
+  } else {
+    block->next = flist;
+    block->next->prev = block;
+    block->prev = flist->prev;
+    block->prev->next = block;
+  }
+  
   flist = block;
 }
 
