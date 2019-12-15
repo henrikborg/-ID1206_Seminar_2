@@ -16,6 +16,9 @@ struct head {
   struct head *prev;  // 8 bytes pinter
 };
 
+/* The free list */
+struct head *flist;
+
 #define TRUE 1
 #define FALSE 0
 #define HEAD (sizeof(struct head))
@@ -32,6 +35,25 @@ struct head *after(struct head *block) {
 
 struct head *before(struct head *block) {
   return (struct head*)((char*)block - block->bsize - HEAD);
+}
+
+void insert(struct head *block) {
+  block->next = flist;//NULL;//flist;//after(block);
+  block->prev = NULL;//flist;//before(block);
+  
+  if(flist->next == flist) {
+    flist->next = block;
+    flist->prev = block;
+    block->next = flist;
+    block->prev = flist;
+  } else {
+    block->next = flist;
+    block->next->prev = block;
+    block->prev = flist->prev;
+    block->prev->next = block;
+  }
+  
+  flist = block;
 }
 
 struct head *split(struct head *block, int size) {
@@ -99,9 +121,6 @@ struct head *new() {
 
   return new;
 }
-
-/* The free list */
-struct head *flist;
 
 /* Detach a block from the free list */
 void detach(struct head *block) {
@@ -188,7 +207,7 @@ struct head* find(int size) {
     if(block->size >= LIMIT(size)) {
       struct head *splt;
       splt = split(block, size);
-      detach(splt);
+      insert(splt);
 
       return splt;
     } else {
@@ -217,25 +236,6 @@ int *dalloc(size_t request) {
     printf("alloc mem %p\n", taken);
     return HIDE(taken);
   }
-}
-
-void insert(struct head *block) {
-  block->next = flist;//NULL;//flist;//after(block);
-  block->prev = NULL;//flist;//before(block);
-  
-  if(flist->next == flist) {
-    flist->next = block;
-    flist->prev = block;
-    block->next = flist;
-    block->prev = flist;
-  } else {
-    block->next = flist;
-    block->next->prev = block;
-    block->prev = flist->prev;
-    block->prev->next = block;
-  }
-  
-  flist = block;
 }
 
 void dfree(void *memory) {
