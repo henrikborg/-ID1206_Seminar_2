@@ -54,7 +54,7 @@ int main() {
 		}
     //printf("flist - bench exit - %p\n", flist);
     freelist_info = sanity(0,1,0,0,0);
-		printf("%d\t", j*ROUNDS+i);
+		printf("%d\t", j*LOOPS+i);
     printf(" %d\t", freelist_info->no_of_blocks_in_freelist);
     printf(" %d\t", freelist_info->no_of_blocks_in_arena);
     printf(" %d\n", freelist_info->total_size_of_blocks_in_freelist / freelist_info->no_of_blocks_in_freelist);
