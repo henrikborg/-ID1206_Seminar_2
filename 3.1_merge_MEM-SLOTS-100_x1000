@@ -3003,6 +3003,6 @@ free+dalloc
 29990	 31	 86	 1840
 30000	 31	 88	 1839
 == DONE ==
-Checking freelist - flist = 0x7f4619bcd018
+Checking freelist - flist = 0x7fd1643bb018
 Checking ARENA-list
 Sanity checked - OK

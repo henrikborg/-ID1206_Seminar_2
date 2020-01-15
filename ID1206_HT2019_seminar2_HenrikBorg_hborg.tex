@@ -1,0 +1,88 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\title{{\HUGE Seminarie 2}\\ \begin{Large}
+Operativsystem
+\end{Large}}
+\author{Henrik Borg}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\usepackage{lastpage}
+\lfoot{Henrik Borg\\hborg@kth.se\\+46(0)70 741 8370}
+\cfoot{ID1206\\Operativsystem\\Seminarie 2}
+\rfoot{Sida \thepage/4}
+\begin{document}
+\maketitle
+ \\
+. \\
+. \\
+\begin{center}
+\section*{Eller...}
+Inga problem - Med ett villkor\\
+Dela inte resurser
+\end{center}
+
+\pagebreak
+
+
+Jämförelse av vanilla med och utan merge av blocken i frilistan.\\
+\\	
+Samtliga tester utförs med två olika max längder av arean, 100 respektive 1000 positioner.
+De försök till att allokera mer minne som resulterar i ett misslyckande redovisas inte.
+
+Simuleringarna försöker efterspela en vanlig använder genom antagandet att det är vanligare att användaren kommer efterfråga mindre block än större block. Vidare görs antagandet att vissa minnesblock kommer allokeras/avallokeras oftare än andra.
+
+\section*{Vanilla med och utan sammanslagning}
+Frilistan\\
+\includegraphics[width=70mm]{3_freelist_100.png}
+\includegraphics[width=70mm]{3_freelist_1000.png}\\
+Vid en jämförelse av ?vanilla? och ?vanilla med smannalagning? syns en tydlig skillnad i hur frilistan växer över tiden. Med sammanslagning av ledigt utrymme kommer man frilistan växa långsammare. Detta beror på att när små intilliggande block slås samman får användaren möjlighet att ta det större blocket, därmed växer frilistan inte lika snabbt som i fallet utan sammanslagning. Skillnaden i längd är mer än en faktor tio.\\
+\\
+Medelstorleken av blocken i den fria lista\\
+\includegraphics[width=70mm]{3_merge_mean_value_100.png}
+\includegraphics[width=70mm]{3_merge_mean_value_1000.png}\\
+Ur figurerna över medelstorleken av de fria blocken i frilistan går det att dra slutsatsen att utan sammanslagning av det fria utrymmet kommer vi till slut kommer ha en frilista som är fylld med  mycket små block. Orsaken bakom är att för varje gång vi behöver utrymme för att spara undan ett block kommer vi antingen ta ett block av exakt rätt storlek eller ta ett block som är större, dela upp det och lägga tillbaka det vi inte behöver. På så vis kommer blocken i frilistan med tiden att krympa till dess att de kommer nå sin minsta tillåtna storlek. Om sammanslagning tillåts av intilliggande fria block får blocken i frilistan av chansen att öka i storlek, vilket syns i den högra figuren mellan 5000 och 15000 körningar.\\
+\\
+Antalet element i arenan\\
+\includegraphics[width=70mm]{3_arena_100.png}
+\includegraphics[width=70mm]{3_arena_1000.png}\\
+Ur figurerna över antalet block i arenan går det att dra samma slutsats som för hur medelstorleken av blocken i den fria lista beror på om sammanslagning av intilliggande fria block tillåts eller ej. Om sammanslagning tillåts ges användaren chans att ta större block i anspråk vilket leder till färre block i arenan.
+
+\section*{Storleken på minnes-overheaden}
+\includegraphics[width=70mm]{4-1_head_vs_taken.png} 
+Att skapa många lika stora element i rad tar lika lång tid oberoende av hur stor minnesoverheaden är.\\
+\\
+\includegraphics[width=70mm]{4_freelist_taken_merge_100.png}
+\includegraphics[width=70mm]{4_freelist_taken_merge_1000.png}\\
+\includegraphics[width=70mm]{4_merge_mean_value_taken_merge_100.png}
+\includegraphics[width=70mm]{4_merge_mean_value_taken_merge_1000.png}\\
+\includegraphics[width=70mm]{4_arena_taken_merge_100.png}
+\includegraphics[width=70mm]{4_arena_taken_merge_1000.png}\\
+I de många figurerna ovan ses att det för 100 minnespositioner (den vänstra kolumnen) inte är någon skillnad mellan att jobba med sammanslagning av intilliggande fria block med avseende på storleken på minnes-overheaden. Detta medans man ur figurerna i högre kolumnen (1000 minnespositioner) ser en liknande vinst som när frilistor med eller utan sammanslagning av intilliggande fria block jämförs, till fördel för mindre minnes-overhead.
+
+
+\section*{Listning av pseudo-kod}
+Simulerande av en vanlig användaren
+\begin{lstlisting}[tabsize=4]
+int request(int max) {
+	/* k is log(MAX/MIN */
+	k = log(max);
+
+	/* r is [0..K] */
+	rand() % (k*10000) / 10000;
+
+	/* size is [o..MAX] */
+	size = max / exp(r);
+
+	return size;
+}
+
+int request_size() {
+	return request(max_size);
+}
+\end{lstlisting}
+\end{document}

@@ -31,11 +31,20 @@ struct taken {
 
 #define TRUE 1
 #define FALSE 0
+
+#ifdef SMALL_HEADER
 #define HEAD (sizeof(struct taken))
 #define MIN(size) (((size)>(16))?(size):(16))
-#define LIMIT(size) (MIN(0) + HEAD + size)
 #define MAGIC(memory) (struct head*)((struct taken*) memory - 1)
 #define HIDE(block) (void*)((struct taken*)block + 1)
+#else
+#define HEAD (sizeof(struct head))
+#define MIN(size) (((size)>(8))?(size):(8))
+#define MAGIC(memory) (struct head*)((struct head*) memory - 1)
+#define HIDE(block) (void*)((struct head*)block + 1)
+#endif
+
+#define LIMIT(size) (MIN(0) + HEAD + size)
 #define ALIGN 8
 #define ARENA (64 * 1024)
 

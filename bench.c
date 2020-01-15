@@ -5,9 +5,9 @@
 #include "rand.h"
 #include "dlmall.h"
 
-#define ROUNDS 100
+#define ROUNDS 3000
 #define LOOPS 10
-#define MAX_MEMORY_SLOTS 1000	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
+#define MAX_MEMORY_SLOTS 100	// An array of memmory blocks to remember wich ones we have taken and can free them. No lost pointers!
 
 int main() {
   struct freelist *freelist_info;
